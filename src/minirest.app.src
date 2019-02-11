@@ -1,5 +1,5 @@
 {application, minirest,
-             [{description,"A mini RESTful API framework built on cowboy and jsx."},
+             [{description,"MINI REST for COWBOY and JSX"},
               {vsn,"git"},
               {modules,[]},
               {registered,[]},
