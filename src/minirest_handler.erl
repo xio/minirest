@@ -165,14 +165,14 @@ reply(Code, Text, Req) ->
 
 %% JSON
 json_encode(D) ->
-    to_binary(jiffy:encode(D, [force_utf8])).
+    to_binary(jsx:encode(D)).
 
 to_binary(B) when is_binary(B) -> B;
 to_binary(L) when is_list(L) ->
     iolist_to_binary(L).
 
 json_decode(B) ->
-    from_ejson(jiffy:decode(B)).
+    from_ejson(jsx:decode(B)).
 
 %% For compatible previous params format
 from_ejson([{_}|_] = L) ->
