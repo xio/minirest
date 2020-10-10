@@ -50,8 +50,7 @@ list(_Bindings, _Params) ->
 get(#{id := Id}, _Params) ->
     {200, #{id => Id, name => list_to_binary("book" ++ integer_to_list(Id))}}.
 
-put(#{id := Id}, Params) ->
-    Name = proplists:get_value(<<"name">>, Params),
+put(#{id := Id}, #{<<"name">> := Name}=Params) ->
     case Name of
         <<"ok">> ->
             ok;
