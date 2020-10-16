@@ -33,7 +33,7 @@
 -define(LOG(Level, Format, Args), logger:Level("Minirest(Handler): " ++ Format, Args)).
 
 -type(option() :: {authorization, fun()}).
--type(handler() :: {string(), mfa()} | {string(), mfa(), list(option())} | {atom(), atom(), list()} ).
+-type(handler() :: {string(), mfa()} | {string(), mfa(), list(option())}).
 
 -export_type([ option/0
              , handler/0
@@ -94,9 +94,7 @@ handlers(Handlers) ->
 %% Handler helper
 %%------------------------------------------------------------------------------
 
-
-
--spec(handler(minirest_handler:config()) -> handler()).
+-spec(handler(minirest_handler:config()) -> {atom(), atom(), list()}).
 handler(Config) -> minirest_handler:init(Config).
 
 %%------------------------------------------------------------------------------

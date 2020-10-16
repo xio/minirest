@@ -24,7 +24,7 @@
 
 -define(LOG(Level, Format, Args), logger:Level("Minirest(Handler): " ++ Format, Args)).
 
--spec(init(config()) -> {?MODULE, dispatch, list()}).
+-spec(init(config()) -> {atom(), dispatch, list(any())}).
 init(Config) ->
     Routes = lists:map(fun(App) ->
         {ok, Modules} = application:get_key(App, modules),
@@ -167,7 +167,7 @@ reply(Code, Text, Req) ->
 json_encode(D) ->
     to_binary(jsone:encode(D, [native_utf8])).
 
--spec(to_binary(binary()|list()) -> binary()).
+-dialyzer([{nowarn_function, to_binary/1}]).
 to_binary(B) when is_binary(B) -> B;
 to_binary(L) when is_list(L) ->
     iolist_to_binary(L).
