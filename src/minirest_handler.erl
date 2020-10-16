@@ -167,6 +167,7 @@ reply(Code, Text, Req) ->
 json_encode(D) ->
     to_binary(jsone:encode(D, [native_utf8])).
 
+-spec(to_binary(binary()|list()) -> binary()).
 to_binary(B) when is_binary(B) -> B;
 to_binary(L) when is_list(L) ->
     iolist_to_binary(L).
