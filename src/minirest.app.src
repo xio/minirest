@@ -1,9 +1,9 @@
 {application, minirest,
-    [{description,"MINI REST for COWBOY and JSX"},
+    [{description,"MINI REST for COWBOY and JSONE"},
     {vsn,"git"},
     {modules,[]},
     {registered,[]},
-    {applications, [kernel, stdlib, jsx, cowboy]},
+    {applications, [kernel, stdlib, jsone, cowboy]},
     {env,[]},
     {licenses, ["Apache-2.0"]},
     {links, ["Github", "https://github.com/emqx/minirest"]}
