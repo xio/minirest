@@ -33,7 +33,7 @@
 -define(LOG(Level, Format, Args), logger:Level("Minirest(Handler): " ++ Format, Args)).
 
 -type(option() :: {authorization, fun()}).
--type(handler() :: {string(), mfa()} | {string(), mfa(), list(option())}).
+-type(handler() :: {string(), mfa()} | {string(), mfa(), list(option())} | {atom(), atom(), list()} ).
 
 -export_type([ option/0
              , handler/0
@@ -43,33 +43,34 @@
 %% Start/Stop Http
 %%------------------------------------------------------------------------------
 
--spec(start_http(atom(), list(), list()) -> {ok, pid()}).
+-spec(start_http(atom(), ranch:opts(), list()) -> {ok, pid()} | {error,any()}).
 start_http(ServerName, Options, Handlers) ->
     Dispatch = cowboy_router:compile([{'_', handlers(Handlers)}]),
     case cowboy:start_clear(ServerName, Options, #{env => #{dispatch => Dispatch}}) of 
-        {ok, _}  -> ok;
+        {ok, Pid}  ->
+            io:format("Start ~s listener on ~p successfully.~n", [ServerName, get_port(Options)]),
+            {ok, Pid};
         {error, eaddrinuse} ->
             ?LOG(error, "Start ~s listener on ~p unsuccessfully: the port is occupied", [ServerName, get_port(Options)]),
-            error(eaddrinuse);
+            {error, eaddrinuse};
         {error, Any} ->
             ?LOG(error, "Start ~s listener on ~p unsuccessfully: ~0p", [ServerName, get_port(Options), Any]),
-            error(Any)
-    end,
-    io:format("Start ~s listener on ~p successfully.~n", [ServerName, get_port(Options)]).
+            {error, Any}
+    end.
 
--spec(start_https(atom(), list(), list()) -> {ok, pid()}).
+-spec(start_https(atom(), ranch:opts(), list()) -> {ok, pid()} | {error, any()}).
 start_https(ServerName, Options, Handlers) ->
     Dispatch = cowboy_router:compile([{'_', handlers(Handlers)}]),
     case cowboy:start_tls(ServerName, Options, #{env => #{dispatch => Dispatch}}) of 
-        {ok, _}  -> ok;
+        {ok, Pid}  -> io:format("Start ~s listener on ~p successfully.~n", [ServerName, get_port(Options)]),
+            {ok, Pid};
         {error, eaddrinuse} ->
             ?LOG(error, "Start ~s listener on ~p unsuccessfully: the port is occupied", [ServerName, get_port(Options)]),
-            error(eaddrinuse);
+            {error, eaddrinuse};
         {error, Any} ->
             ?LOG(error, "Start ~s listener on ~p unsuccessfully: ~0p", [ServerName, get_port(Options), Any]),
-            error(Any)
-    end,
-    io:format("Start ~s listener on ~p successfully.~n", [ServerName, get_port(Options)]).
+            {error, Any}
+    end.
 
 -spec(stop_http(atom()) -> ok).
 stop_http(ServerName) ->
@@ -92,6 +93,8 @@ handlers(Handlers) ->
 %%------------------------------------------------------------------------------
 %% Handler helper
 %%------------------------------------------------------------------------------
+
+
 
 -spec(handler(minirest_handler:config()) -> handler()).
 handler(Config) -> minirest_handler:init(Config).
