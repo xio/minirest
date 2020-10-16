@@ -65,17 +65,17 @@ t_init(_Config) ->
 
 t_index(_Config) ->
     {ok, {{_, 200, "OK"}, _Headers, Body}} = httpc_get("http://127.0.0.1:8080/api/v2/"),
-    #{<<"code">> := 0, <<"data">> := APIs} = jsx:decode(Body, [return_maps]),
+    #{<<"code">> := 0, <<"data">> := APIs} = jsone:decode(Body, [{object_format, map}]),
     ct:print("REST APIs: ~p", [APIs]),
     ?assertEqual(4, length(APIs)).
 
 t_get(_Config) ->
     {ok, {{_, 200, "OK"}, _Headers, Body}} = httpc_get("http://127.0.0.1:8080/api/v2/books/1"),
-    ?assertEqual(#{<<"id">> => 1, <<"name">> => <<"book1">>}, jsx:decode(Body, [return_maps])).
+    ?assertEqual(#{<<"id">> => 1, <<"name">> => <<"book1">>}, jsone:decode(Body, [{object_format, map}])).
 
 t_list(_Config) ->
     {ok, {{_, 200, "OK"}, _Headers, Body}} = httpc_get("http://127.0.0.1:8080/api/v2/books/"),
-    ?assertEqual(100, length(jsx:decode(Body, [return_maps]))).
+    ?assertEqual(100, length(jsone:decode(Body, [{object_format, map}]))).
 
 t_put(_Config) ->
     SuccessJson = #{name => <<"ok">>},
@@ -119,7 +119,7 @@ json_request(Request, Url, Json) ->
 
 json_request(Request, Url, Json, Headers) ->
     ContentType = "application/json",
-    Body = iolist_to_binary(jsx:encode(Json)),
+    Body = iolist_to_binary(jsone:encode(Json)),
     httpc:request(Request, {Url, Headers, ContentType, Body}, [], []).
 
 auth_header_(User, Pass) ->
