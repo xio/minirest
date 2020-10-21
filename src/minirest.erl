@@ -23,6 +23,7 @@
 
 -export([ return/0
         , return/1
+        , handlers/1
         ]).
 
 %% Cowboy callback
