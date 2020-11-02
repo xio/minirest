@@ -49,7 +49,7 @@ start_http(ServerName, Options, Handlers) ->
     Dispatch = cowboy_router:compile([{'_', handlers(Handlers)}]),
     case cowboy:start_clear(ServerName, Options, #{env => #{dispatch => Dispatch}}) of 
         {ok, Pid}  ->
-            io:format("Start ~s listener on ~p successfully.~n", [ServerName, get_port(Options)]),
+            ?LOG(info, "Start ~s listener on ~p successfully.~n", [ServerName, get_port(Options)]),
             {ok, Pid};
         {error, eaddrinuse} ->
             ?LOG(error, "Start ~s listener on ~p unsuccessfully: the port is occupied", [ServerName, get_port(Options)]),
@@ -63,7 +63,8 @@ start_http(ServerName, Options, Handlers) ->
 start_https(ServerName, Options, Handlers) ->
     Dispatch = cowboy_router:compile([{'_', handlers(Handlers)}]),
     case cowboy:start_tls(ServerName, Options, #{env => #{dispatch => Dispatch}}) of 
-        {ok, Pid}  -> io:format("Start ~s listener on ~p successfully.~n", [ServerName, get_port(Options)]),
+        {ok, Pid}  ->
+            ?LOG(info, "Start ~s listener on ~p successfully.~n", [ServerName, get_port(Options)]),
             {ok, Pid};
         {error, eaddrinuse} ->
             ?LOG(error, "Start ~s listener on ~p unsuccessfully: the port is occupied", [ServerName, get_port(Options)]),
@@ -103,15 +104,25 @@ handler(Config) -> minirest_handler:init(Config).
 %%------------------------------------------------------------------------------
 
 init(Req, Opts) ->
-    Req1 = handle_request(Req, Opts),
-    {ok, Req1, Opts}.
+    Origin = case cowboy_req:header(<<"origin">>, Req, <<"*">>) of {O,_} -> O; X -> X end,
+    Hds = #{
+        <<"access-control-allow-origin">> => Origin,
+        <<"access-control-allow-methods">> => <<"*">>,
+        <<"access-control-allow-credentials">>  => <<"true">>,
+        <<"access-control-allow-headers">> => <<"ContentType, Cache-Control, Content-Type, Authorization">>,
+        <<"cache-control">> => <<"no-cache">>
+    },
+    Req1 = cowboy_req:set_resp_headers(Hds, Req),
+    Req2 = handle_request(Req1, Opts),
+    {ok, Req2, Opts}.
 
 %% Callback
-handle_request(Req, Handlers) ->
+handle_request(#{method := Method} = Req, Handlers) ->
     case match_handler(binary_to_list(cowboy_req:path(Req)), Handlers) of
-        {ok, Path, Handler} ->
-            try
-                apply_handler(Req, Path, Handler)
+        {ok,_,_} when Method =:= <<"OPTIONS">> -> 
+            cowboy_req:reply(204, #{}, <<"">>, Req);
+        {ok, Path, Handler} -> try
+            apply_handler(Req, Path, Handler)
             catch _:Error:Stacktrace ->
                 internal_error(Req, Error, Stacktrace)
             end;
@@ -119,8 +130,7 @@ handle_request(Req, Handlers) ->
             cowboy_req:reply(400, #{<<"content-type">> => <<"text/plain">>}, <<"Not found.">>, Req)
     end.
 
-match_handler(_Path, []) ->
-    not_found;
+match_handler(_Path, []) -> not_found;
 match_handler(Path, [Handler = #{prefix := Prefix} | Handlers]) ->
     case string:prefix(Path, Prefix) of
         nomatch -> match_handler(Path, Handlers);
